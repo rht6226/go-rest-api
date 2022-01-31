@@ -5,18 +5,42 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/rht6226/go-rest-api/controller"
+	router "github.com/rht6226/go-rest-api/http-router"
+	"github.com/rht6226/go-rest-api/repository"
+	"github.com/rht6226/go-rest-api/service"
 )
+
+var (
+	httpRouter     router.Router
+	repo           repository.PostRepository
+	postService    service.PostService
+	postController controller.PostController
+)
+
+const (
+	port string = ":8080"
+)
+
+func init() {
+	httpRouter = router.NewMuxRouter()
+	repo = repository.NewFirestoreRepositopy()
+	postService = service.NewPostService(repo)
+	postController = controller.NewPostController(postService)
+}
 
 func main() {
 
-	router := mux.NewRouter()
-	const port string = ":8080"
-	router.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
+	httpRouter.GET("/", func(response http.ResponseWriter, request *http.Request) {
 		fmt.Fprintln(response, "Up and runing...")
 	})
-	router.HandleFunc("/posts", getPosts).Methods("GET")
-	router.HandleFunc("/posts", addPost).Methods("POST")
-	log.Print("Server Listening on port: ", port)
-	log.Fatal(http.ListenAndServe(port, router))
+
+	// register routes
+	httpRouter.GET("/posts", postController.GetPosts)
+	httpRouter.POST("/posts", postController.AddPost)
+
+	err := httpRouter.SERVE(port)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
