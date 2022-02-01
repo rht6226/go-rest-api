@@ -23,6 +23,9 @@ func (mock *mockRepository) FindAll() ([]entity.Post, error) {
 	result := args.Get(0)
 	return result.([]entity.Post), args.Error(1)
 }
+func (mock *mockRepository) Delete(*entity.Post) error {
+	return nil
+}
 
 // Case when empty post is supplied
 func TestValidateEmptyPost(t *testing.T) {
