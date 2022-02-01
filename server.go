@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/rht6226/go-rest-api/controller"
 	router "github.com/rht6226/go-rest-api/http-router"
@@ -18,15 +19,24 @@ var (
 	postController controller.PostController
 )
 
-const (
-	port string = ":8080"
+func init() {
+	httpRouter = router.NewMuxRouter()
+	repo = repository.NewSQLiteRepository()
+	postService = service.NewPostService(repo)
+	postController = controller.NewPostController(postService)
+}
+
+var (
+	port string
 )
 
 func init() {
-	httpRouter = router.NewMuxRouter()
-	repo = repository.NewFirestoreRepositopy()
-	postService = service.NewPostService(repo)
-	postController = controller.NewPostController(postService)
+	assigned := os.Getenv("PORT")
+	if len(assigned) != 0 {
+		port = assigned
+	} else {
+		port = "8080"
+	}
 }
 
 func main() {
@@ -39,7 +49,7 @@ func main() {
 	httpRouter.GET("/posts", postController.GetPosts)
 	httpRouter.POST("/posts", postController.AddPost)
 
-	err := httpRouter.SERVE(port)
+	err := httpRouter.SERVE(fmt.Sprintf(":%v", port))
 	if err != nil {
 		log.Fatal(err)
 	}
