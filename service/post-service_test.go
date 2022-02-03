@@ -26,6 +26,9 @@ func (mock *mockRepository) FindAll() ([]entity.Post, error) {
 func (mock *mockRepository) Delete(*entity.Post) error {
 	return nil
 }
+func (mock *mockRepository) FindByID(id string) (*entity.Post, error) {
+	return nil, nil
+}
 
 // Case when empty post is supplied
 func TestValidateEmptyPost(t *testing.T) {

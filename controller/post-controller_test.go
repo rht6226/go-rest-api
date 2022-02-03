@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
+	"github.com/rht6226/go-rest-api/cache"
 	"github.com/rht6226/go-rest-api/entity"
 	"github.com/rht6226/go-rest-api/repository"
 	"github.com/rht6226/go-rest-api/service"
@@ -18,7 +20,8 @@ import (
 var (
 	postRepo repository.PostRepository = repository.NewSQLiteRepository()
 	postSrvc service.PostService       = service.NewPostService(postRepo)
-	postCtrl PostController            = NewPostController(postSrvc)
+	postCache cache.PostCache = cache.NewRedisCache("localhost:6379", 0, 10)
+	postCtrl PostController            = NewPostController(postSrvc, postCache)
 )
 
 const (
@@ -81,6 +84,28 @@ func TestGetPost(t *testing.T) {
 	assert.Equal(t, TEXT, posts[0].Text)
 
 	cleanUp(posts[0])
+}
+
+func TestGetPostByID(t *testing.T) {
+
+	// insert new post
+	setup()
+
+	req, _ := http.NewRequest("GET", "/posts/" + strconv.FormatInt(ID, 10), nil)
+	handler := http.HandlerFunc(postCtrl.GetPostById)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, req)
+	status := response.Code
+	if status != http.StatusOK {
+		t.Errorf("Handler returned a wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	var post entity.Post
+	json.NewDecoder(io.Reader(response.Body)).Decode(&post)
+
+	assert.Equal(t, ID, post.Id)
+	assert.Equal(t, TITLE, post.Title)
+	assert.Equal(t, TEXT, post.Text)
 }
 
 func setup() {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rht6226/go-rest-api/cache"
 	"github.com/rht6226/go-rest-api/controller"
 	router "github.com/rht6226/go-rest-api/http-router"
 	"github.com/rht6226/go-rest-api/repository"
@@ -13,9 +14,11 @@ import (
 )
 
 var (
+	port           string
 	httpRouter     router.Router
 	repo           repository.PostRepository
 	postService    service.PostService
+	postCache      cache.PostCache
 	postController controller.PostController
 )
 
@@ -23,14 +26,10 @@ func init() {
 	httpRouter = router.NewMuxRouter()
 	repo = repository.NewSQLiteRepository()
 	postService = service.NewPostService(repo)
-	postController = controller.NewPostController(postService)
-}
+	postCache = cache.NewRedisCache("localhost:6379", 1, 60)
+	postController = controller.NewPostController(postService, postCache)
 
-var (
-	port string
-)
-
-func init() {
+	// port
 	assigned := os.Getenv("PORT")
 	if len(assigned) != 0 {
 		port = assigned
