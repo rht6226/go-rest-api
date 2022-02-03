@@ -47,6 +47,7 @@ func main() {
 	// register routes
 	httpRouter.GET("/posts", postController.GetPosts)
 	httpRouter.POST("/posts", postController.AddPost)
+	httpRouter.GET("/posts/{id}", postController.GetPostById)
 
 	err := httpRouter.SERVE(fmt.Sprintf(":%v", port))
 	if err != nil {
